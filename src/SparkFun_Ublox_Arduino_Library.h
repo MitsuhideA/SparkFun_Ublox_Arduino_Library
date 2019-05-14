@@ -322,6 +322,7 @@ class SFE_UBLOX_GPS
 	} commType = COMM_TYPE_I2C; //Controls which port we look to for incoming bytes
 
 	//Functions
+	uint64_t extractFloat(uint8_t spotToStart);
 	uint32_t extractLong(uint8_t spotToStart); //Combine four bytes from payload into long
 	uint16_t extractInt(uint8_t spotToStart); //Combine two bytes from payload into int
 	uint8_t extractByte(uint8_t spotToStart); //Get byte from payload

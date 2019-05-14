@@ -1080,6 +1080,21 @@ boolean SFE_UBLOX_GPS::setAutoPVT(boolean enable, uint16_t maxWait)
     return ok;
 }
 
+//Given a spot in the payload array, extract eight bytes and build a long
+uint64_t SFE_UBLOX_GPS::extractFloat(uint8_t spotToStart)
+{
+	uint64_t val = 0;
+	val |= (int64_t)payloadCfg[spotToStart + 0] << 8*0;
+	val |= (int64_t)payloadCfg[spotToStart + 1] << 8*1;
+	val |= (int64_t)payloadCfg[spotToStart + 2] << 8*2;
+	val |= (int64_t)payloadCfg[spotToStart + 3] << 8*3;
+  val |= (int64_t)payloadCfg[spotToStart + 4] << 8*4;
+	val |= (int64_t)payloadCfg[spotToStart + 5] << 8*5;
+	val |= (int64_t)payloadCfg[spotToStart + 6] << 8*6;
+	val |= (int64_t)payloadCfg[spotToStart + 7] << 8*7;
+	return(val);
+}
+
 //Given a spot in the payload array, extract four bytes and build a long
 uint32_t SFE_UBLOX_GPS::extractLong(uint8_t spotToStart)
 {
