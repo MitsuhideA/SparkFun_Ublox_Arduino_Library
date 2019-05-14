@@ -1313,3 +1313,40 @@ boolean SFE_UBLOX_GPS::getProtocolVersion(uint16_t maxWait)
 
 	return(true);
 }
+
+boolean SFE_UBLOX_GPS::setGNSS(uint16_t maxWait)
+{
+  uint8_t nbConf = 7;
+  uint8_t confArray[7][4] = {
+    {1, 8, 16, 0x01},
+    {0, 1, 3, 0x01},
+    {1, 4, 8, 0x01},
+    {0, 8, 16, 0x01},
+    {0, 0, 8, 0x01},
+    {1, 0, 3, 0x01},
+    {1, 8, 14, 0x01}
+  };
+
+  packetCfg.cls = UBX_CLASS_CFG;
+	packetCfg.id = UBX_CFG_GNSS;
+  packetCfg.len = 4 + 8 * nbConf;
+  packetCfg.startingSpot = 0;
+
+  for(uint8_t x = 0 ; x < packetCfg.len ; x++)
+    packetCfg.payload[x] = 0;
+
+  payloadCfg[2] = 32;
+  payloadCfg[3] = nbConf;
+  for (uint8_t i = 0; i < nbConf; i++) {
+    payloadCfg[4 + 8*i] = i;
+    payloadCfg[5 + 8*i] = confArray[i][1];
+    payloadCfg[6 + 8*i] = confArray[i][2];
+    payloadCfg[7 + 8*i] = 0;
+    payloadCfg[8 + 8*i + 0] = confArray[i][0];
+    payloadCfg[8 + 8*i + 2] = (confArray[i][3]);
+    payloadCfg[8 + 8*i + 3] = 0x01;
+  }
+
+  return (sendCommand(packetCfg, maxWait));
+}
+

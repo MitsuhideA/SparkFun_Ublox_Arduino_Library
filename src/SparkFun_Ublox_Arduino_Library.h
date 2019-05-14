@@ -95,6 +95,7 @@ const uint8_t UBX_CFG_PRT = 0x00; //Used to configure port specifics
 const uint8_t UBX_CFG_RST = 0x04; //Used to reset device
 const uint8_t UBX_CFG_RATE = 0x08; //Used to set port baud rates
 const uint8_t UBX_CFG_CFG = 0x09; //Used to save current configuration
+const uint8_t UBX_CFG_GNSS = 0x3E; //Used to configure GNSS
 const uint8_t UBX_CFG_VALSET = 0x8A; //Used for config of higher version Ublox modules (ie protocol v27 and above)
 const uint8_t UBX_CFG_VALGET = 0x8B; //Used for config of higher version Ublox modules (ie protocol v27 and above)
 const uint8_t UBX_CFG_VALDEL = 0x8C; //Used for config of higher version Ublox modules (ie protocol v27 and above)
@@ -221,6 +222,8 @@ class SFE_UBLOX_GPS
 	uint8_t getNavigationFrequency(uint16_t maxWait = 250); //Get the number of nav solutions sent per second currently being output by module
 	boolean saveConfiguration(uint16_t maxWait = 250); //Save current configuration to flash and BBR (battery backed RAM)
 	boolean factoryDefault(uint16_t maxWait = 250); //Reset module to factory defaults
+
+	boolean setGNSS(uint16_t maxWait = 250);
 
 	boolean waitForResponse(uint8_t requestedClass, uint8_t requestedID, uint16_t maxTime = 250); //Poll the module until and ack is received
 
