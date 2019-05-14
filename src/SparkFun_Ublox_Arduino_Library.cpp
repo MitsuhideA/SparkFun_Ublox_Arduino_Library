@@ -1365,3 +1365,43 @@ boolean SFE_UBLOX_GPS::setGNSS(uint16_t maxWait)
   return (sendCommand(packetCfg, maxWait));
 }
 
+/**
+ * Gets raw data from the satelites
+ * To know if the function succeeded, ubxRxmRawxPacket::numMeas should be different from 255
+ */
+ubxRxmRawxPacket SFE_UBLOX_GPS::getRxmRawx(uint16_t maxWait)
+{
+  ubxRxmRawxPacket toReturn;
+  packetCfg.cls = UBX_CLASS_RXM;
+  packetCfg.id = UBX_RXM_RAWX;
+  packetCfg.len = 0;
+  packetCfg.startingSpot = 0;
+
+  //This will load the payloadCfg array with current settings of the given register
+	if(sendCommand(packetCfg, maxWait) == false) {
+    toReturn.numMeas = 255;
+		return toReturn; //If command send fails then bail by setting numMeas to 255
+  }
+
+  toReturn.rcvTow = extractFloat(0);
+  toReturn.week = extractInt(8);
+  toReturn.leapS = extractByte(10);
+  toReturn.numMeas = extractByte(11);
+  toReturn.recStat = extractByte(12);
+  for (int i = 0; i < toReturn.numMeas; i++) {
+    toReturn.measData[i].prMEs = extractFloat(16 + 32*i);
+    toReturn.measData[i].cpMes = extractFloat(24 + 32*i);
+    toReturn.measData[i].doMes = extractLong(32 + 32*i);
+    toReturn.measData[i].gnssId = extractByte(36 + 32*i);
+    toReturn.measData[i].svId = extractByte(37 + 32*i);
+    toReturn.measData[i].freqId = extractByte(39 + 32*i);
+    toReturn.measData[i].locktime = extractInt(40 + 32*i);
+    toReturn.measData[i].cno = extractByte(42 + 32*i);
+    toReturn.measData[i].prStdev = extractByte(43 + 32*i);
+    toReturn.measData[i].cpStdev = extractByte(44 + 32*i);
+    toReturn.measData[i].doStdev = extractByte(45 + 32*i);
+    toReturn.measData[i].trkStat = extractByte(46 + 32*i);
+  }
+
+  return toReturn;
+}

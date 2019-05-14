@@ -124,6 +124,8 @@ const uint8_t UBX_RTCM_1094 = 0x5E; //Galileo MSM4
 const uint8_t UBX_RTCM_1124 = 0x7C; //BeiDou MSM4
 const uint8_t UBX_RTCM_1230 = 0xE6; //GLONASS code-phase biases, set to once every 10 seconds
 
+const uint8_t UBX_RXM_RAWX = 0x15;
+
 const uint8_t UBX_ACK_NACK = 0x00;
 const uint8_t UBX_ACK_ACK = 0x01;
 
@@ -179,6 +181,32 @@ typedef struct
 	boolean valid; //Goes true when both checksums pass
 } ubxPacket;
 
+typedef struct
+{
+	uint64_t prMEs; // Pseudo Range Measurement
+	uint64_t cpMes; // Carrier phase Measurement
+	uint32_t doMes; // Doppler Measurement
+	uint8_t gnssId; // GNSS identifier
+	uint8_t svId; // Satellite identifier
+	uint8_t freqId; // Only for GLONASS. Frequency slot
+	uint16_t locktime; // Carrier phase locktime counter
+	uint8_t cno; // Carrier-to-noise density ratio
+	uint8_t prStdev; // Estimated pseudorange measurement standard deviation
+	uint8_t cpStdev; // Estimated carrier phase measurement standard deviation
+	uint8_t doStdev; // Estimated Doppler measurement standard deviation
+	uint8_t trkStat; // Tracking status bitfield
+} RxmRawxMeasurementData;
+
+
+typedef struct
+{
+	uint64_t rcvTow; // Measurement time of week
+	uint16_t week; // GPS week number in receiver local time
+	int8_t leapS; // GPS leap seconds
+	uint8_t numMeas; // Number of measurements to follow
+	uint8_t recStat; // Receiver tracking status bitfield
+	RxmRawxMeasurementData measData[32];
+} ubxRxmRawxPacket;
 
 class SFE_UBLOX_GPS
 {
@@ -240,6 +268,8 @@ class SFE_UBLOX_GPS
 	int32_t getGroundSpeed(uint16_t maxWait = 250); //Returns speed in mm/s
 	int32_t getHeading(uint16_t maxWait = 250); //Returns heading in degrees * 10^-7
 	uint16_t getPDOP(uint16_t maxWait = 250); //Returns positional dillution of precision * 10^-2
+
+	ubxRxmRawxPacket getRxmRawx(uint16_t maxWait = 2000);
 
 	//Port configurations
 	boolean setPortOutput(uint8_t portID, uint8_t comSettings, uint16_t maxWait = 250); //Configure a given port to output UBX, NMEA, RTCM3 or a combination thereof
