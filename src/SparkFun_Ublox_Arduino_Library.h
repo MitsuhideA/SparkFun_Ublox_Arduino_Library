@@ -125,6 +125,7 @@ const uint8_t UBX_RTCM_1124 = 0x7C; //BeiDou MSM4
 const uint8_t UBX_RTCM_1230 = 0xE6; //GLONASS code-phase biases, set to once every 10 seconds
 
 const uint8_t UBX_RXM_RAWX = 0x15;
+const uint8_t UBX_RXM_SFRBX = 0x13;
 
 const uint8_t UBX_ACK_NACK = 0x00;
 const uint8_t UBX_ACK_ACK = 0x01;
@@ -167,6 +168,8 @@ const uint8_t VAL_ID_I2C_ADDRESS = 0x01;
 
 #endif
 
+#define MAX_SFRBX_BUFFER_SIZE 20
+
 //-=-=-=-=- UBX binary specific variables
 typedef struct
 {
@@ -207,6 +210,23 @@ typedef struct
 	uint8_t recStat; // Receiver tracking status bitfield
 	RxmRawxMeasurementData measData[32];
 } ubxRxmRawxPacket;
+
+typedef struct
+{
+	uint8_t gnssId;
+	uint8_t svId;
+	uint8_t freqId;
+	uint8_t numWords;
+	uint8_t chn;
+	uint8_t version;
+	uint32_t dwrd[10];
+} ubxRxmSfrbxPacket;
+
+typedef struct
+{
+	ubxRxmSfrbxPacket data[MAX_SFRBX_BUFFER_SIZE];
+	uint8_t length = 0;
+} bufferRxmSfrbx;
 
 class SFE_UBLOX_GPS
 {
@@ -252,6 +272,7 @@ class SFE_UBLOX_GPS
 	boolean factoryDefault(uint16_t maxWait = 250); //Reset module to factory defaults
 
 	boolean setGNSS(uint16_t maxWait = 250);
+	boolean enableSFRBX(boolean enable, uint16_t maxWait = 250);
 
 	boolean waitForResponse(uint8_t requestedClass, uint8_t requestedID, uint16_t maxTime = 250); //Poll the module until and ack is received
 
@@ -270,6 +291,8 @@ class SFE_UBLOX_GPS
 	uint16_t getPDOP(uint16_t maxWait = 250); //Returns positional dillution of precision * 10^-2
 
 	ubxRxmRawxPacket getRxmRawx(uint16_t maxWait = 2000);
+	bufferRxmSfrbx getRxmSfrbxBuffer();
+	void parseRxmSfrbx();
 
 	//Port configurations
 	boolean setPortOutput(uint8_t portID, uint8_t comSettings, uint16_t maxWait = 250); //Configure a given port to output UBX, NMEA, RTCM3 or a combination thereof
@@ -401,6 +424,8 @@ class SFE_UBLOX_GPS
 	   uint16_t pDOP : 1;
 	   uint16_t versionNumber : 1;
 	} moduleQueried;
+
+	bufferRxmSfrbx _bufferRxmSfrbx;
 
 	uint16_t rtcmLen = 0;
 };

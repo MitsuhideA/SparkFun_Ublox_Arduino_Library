@@ -502,6 +502,12 @@ void SFE_UBLOX_GPS::processUBXpacket(ubxPacket *msg)
             moduleQueried.pDOP = true;
         }
         break;
+    case UBX_CLASS_RXM:
+        if (msg->id == UBX_RXM_SFRBX)
+        {
+            parseRxmSfrbx();
+        }
+        break;
     }
 }
 
@@ -970,6 +976,14 @@ boolean SFE_UBLOX_GPS::setPortOutput(uint8_t portID, uint8_t outStreamSettings, 
   //payloadCfg is now loaded with current bytes. Change only the ones we need to
   payloadCfg[14] = outStreamSettings; //OutProtocolMask LSB - Set outStream bits
 
+  if (portID == COM_PORT_I2C) {
+    uint16_t txReady = 0;
+    payloadCfg[2] = bitSet(payloadCfg[2], 0);
+    payloadCfg[2] = bitSet(payloadCfg[2], 1);
+    payloadCfg[2] = payloadCfg[2] & ~(0x7C);
+    payloadCfg[2] = payloadCfg[2] | (0xE << 2); // Active la pin 14 en tant que txReady
+  }
+
   return ( sendCommand(packetCfg, maxWait) );
 }
 
@@ -1403,5 +1417,49 @@ ubxRxmRawxPacket SFE_UBLOX_GPS::getRxmRawx(uint16_t maxWait)
     toReturn.measData[i].trkStat = extractByte(46 + 32*i);
   }
 
+  return toReturn;
+}
+
+boolean SFE_UBLOX_GPS::enableSFRBX(boolean enable, uint16_t maxWait)
+{
+  packetCfg.cls = UBX_CLASS_CFG;
+  packetCfg.id = UBX_CFG_MSG;
+  packetCfg.len = 8;
+  packetCfg.startingSpot = 0;
+
+  //Clear packet payload
+  for(uint8_t x = 0 ; x < packetCfg.len ; x++)
+    packetCfg.payload[x] = 0;
+
+  packetCfg.payload[0] = UBX_CLASS_RXM;
+  packetCfg.payload[1] = UBX_RXM_SFRBX;
+  packetCfg.payload[2] = enable ? 1 : 0;
+
+  return ( sendCommand(packetCfg, maxWait) );
+}
+
+
+void SFE_UBLOX_GPS::parseRxmSfrbx()
+{
+  debug.println("IN_PARSE");
+  if (_bufferRxmSfrbx.length >= MAX_SFRBX_BUFFER_SIZE) {
+    _bufferRxmSfrbx.length = MAX_SFRBX_BUFFER_SIZE - 1;
+  }
+  _bufferRxmSfrbx.data[_bufferRxmSfrbx.length].gnssId = extractByte(0);
+  _bufferRxmSfrbx.data[_bufferRxmSfrbx.length].svId = extractByte(1);
+  _bufferRxmSfrbx.data[_bufferRxmSfrbx.length].freqId = extractByte(3);
+  _bufferRxmSfrbx.data[_bufferRxmSfrbx.length].numWords = extractByte(4);
+  _bufferRxmSfrbx.data[_bufferRxmSfrbx.length].version = extractByte(6);
+  for (int i = 0; i < _bufferRxmSfrbx.data[_bufferRxmSfrbx.length].numWords; i++) {
+    _bufferRxmSfrbx.data[_bufferRxmSfrbx.length].dwrd[i] = extractLong(8 + 4*i);
+  }
+
+  _bufferRxmSfrbx.length++;
+}
+
+bufferRxmSfrbx SFE_UBLOX_GPS::getRxmSfrbxBuffer()
+{
+  bufferRxmSfrbx toReturn = _bufferRxmSfrbx;
+  _bufferRxmSfrbx.length = 0;
   return toReturn;
 }
